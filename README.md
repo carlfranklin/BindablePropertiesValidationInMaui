@@ -52,6 +52,18 @@ In this demo, we will dive into how to implement validation for bindable propert
 
 We will expose a list as an `ObservableCollection<T>` with a twist. 
 
+> :point_up: The goal of this demo is to allow the developer to use vanilla model classes. In other words, the models will not have to implement INotifyPropertyChanged or inherit from a base class that provides property change notification.
+
+#### Create a new Project
+
+Create a new **.NET MAUI App** project called `BindablePropertiesInMaui`
+
+![image-20230321113208034](images/image-20230321113208034.png)
+
+![image-20230321113141696](images/image-20230321113141696.png)
+
+![image-20230321113154639](images/image-20230321113154639.png)
+
 #### Set window size and position
 
 Replace *App.xaml.cs* with the following code to set the size and center the window (if running on Windows):
@@ -142,9 +154,27 @@ One of the main advantages of using this package is that it exposes a `SelectedI
 install-package AvnObservable
 ```
 
-To look at the AvnObservable code go to this [link](https://github.com/carlfranklin/AvnObservable).
+Let's look at what `ObservableCollectionWithSelection<T>` does.
+
+Note that it inherits `ObservableCollection<T>`:
+
+```c#
+public class ObservableCollectionWithSelection<T> : ObservableCollection<T> where T : class
+```
+
+That means you can use it anywhere in your code where you would normally use an `ObservableCollection<T>`. `ObservableCollection<T>` provides property change notification when the collection changes, or items in the collection change.
+
+However, since the goal of this demo is to allow the consumer of our component to use plain models (with no base class), I have provided a `SelectedItem` property, and the logic for making sure the selected item updates in the collection when changes are made to it.
+
+The `AvnObservable` repo contains four demo apps that use `ObservableCollectionWithSelection<T>`. One for Blazor, one for MAUI, one for WPF, and one for Windows Forms. None of the demos us Bindable Properties, however. We will do that here.
+
+For more information on `AvnObservable` check out the repo at this [link](https://github.com/carlfranklin/AvnObservable).
 
 #### Add a new Xaml Component
+
+In our demo we will create a XAML component that includes bindable properties. We will connect data to the component in our MainPage. 
+
+The component will display a list from a bindable `ObservableCollectionWithSelection<T>` property, and allow the user to edit the selected item.
 
 Add a new `ContentView` file and name it *PersonListComponent.xaml*.
 
@@ -249,7 +279,11 @@ public partial class PersonListComponent : ContentView
 }
 ```
 
-We are defining a property called `PersonCollection`, which will be backed by a `BindableProperty` called `PersonCollectionProperty`. This bindable property will allow us to bind our `PersonListComponent` to the code-behind and update the UI in response to changes in the `PersonCollection`.
+We are defining a property called `PersonCollection`, which will be backed by a `BindableProperty` called `PersonCollectionProperty`. 
+
+This is how `BindableProperty` should be used, as a backing field to a property.
+
+This bindable property will allow us to bind our `PersonListComponent` to the code-behind and update the UI in response to changes in the `PersonCollection`.
 
 Replace the contents of *MainPage.xaml* with the following:
 
@@ -277,11 +311,11 @@ public partial class MainPage : ContentPage
 
         // Add data to the PersonList component
         personList.PersonCollection = new AvnObservable.ObservableCollectionWithSelection<Person>
-            {
-                new Person(1, "Carl", "Franklin", DateTime.Now),
-                new Person(2, "Isadora", "Jarr", DateTime.Now),
-                new Person(3, "Hugh", "Jass", DateTime.Now)
-            };
+        {
+            new Person(1, "Carl", "Franklin", DateTime.Now),
+            new Person(2, "Isadora", "Jarr", DateTime.Now),
+            new Person(3, "Hugh", "Jass", DateTime.Now)
+        };
 
         // Handle selected item changing and changed events
         personList.PersonCollection.SelectedItemChanging+= PersonCollection_SelectedItemChanging;
@@ -319,7 +353,7 @@ Additionally, please observe that modifying any of the fields will automatically
 
 Let's proceed to add validation to the application. Although the use case we'll implement is simple, it'll demonstrate how to add validation to bindable properties. Specifically, we'll display a validation message if the collection hasn't been initialized with any elements; otherwise, we'll display the collection elements.
 
-We can add a simple validation check to our `BindableProperty` by utilizing one of its overloads, which accepts a validation function in the `validateValue` parameter. To implement this, we can open the *PersonListViewModel.cs* file and add the `validateValue` parameter with the `IsCollectionValid` function. This function will check if the `PersonCollection` is empty and return a boolean value accordingly.
+We can add a simple validation check to our `BindableProperty` by utilizing one of its overloads, which accepts a validation function in the `validateValue` parameter. To implement this, we can open the *PersonListComponent.xaml.cs* file and add the `validateValue` parameter with the `IsCollectionValid` function. This function will check if the `PersonCollection` is empty and return a boolean value accordingly.
 
 Additionally, we need to add a `ValidationErrorMessageProperty` bindable property, which will hold the validation error message to display in case the collection is empty.
 
@@ -348,12 +382,25 @@ static bool IsCollectionValid(BindableObject view, object value)
 {
     if (((ObservableCollectionWithSelection<Person>)value).Count < 1)
     {
-        ((PersonListViewModel)view).ValidationErrorMessage = "Collection should be initialized with at least one item.";
+        ((PersonListComponent)view).ValidationErrorMessage = "Collection should be initialized with at least one item.";
         return false;
     }
 
     return true;
 }
+```
+
+Finally, add the `validateValue` attribute to the `PersonCollectionProperty` bindable property creation code:
+
+```c#
+    // Define a bindable property for the PersonCollection
+    public static readonly BindableProperty PersonCollectionProperty =
+        // Use the BindableProperty.Create method to create a new bindable property
+        BindableProperty.Create(nameof(PersonCollection),
+        typeof(ObservableCollectionWithSelection<Person>),
+        typeof(PersonListComponent),
+        new ObservableCollectionWithSelection<Person>(),
+        validateValue: IsCollectionValid);
 ```
 
 The complete file should look like this:
@@ -372,11 +419,7 @@ public partial class PersonListComponent : ContentView
 
     private void PersonPropertyChanged(object sender, TextChangedEventArgs e)
     {
-        PersonCollection.UpdateSelectedItemInCollection();
-    }
-
-    private void DatePicker_DateSelected(object sender, DateChangedEventArgs e)
-    {
+        // required for instant updates as you type
         PersonCollection.UpdateSelectedItemInCollection();
     }
 
@@ -423,13 +466,13 @@ public partial class PersonListComponent : ContentView
 }
 ```
 
-Let's add a Label control to the *PersonListComponent.xaml* file, below the `People` label, to display a message if the collection is empty:
+Let's add a Label control to the *PersonListComponent.xaml* file, below the `People` label (line 9), to display a message if the collection is empty:
 
 ```xaml
 <Label x:Name="ValidationLabel"
-    Text="{Binding ValidationErrorMessage}"
-    TextColor="Red"
-    Margin="0,24,0,0" />
+       Text="{Binding ValidationErrorMessage}"
+       TextColor="Red"
+       Margin="0,24,0,0" />
 ```
 
 When validation fails, the `validateValue` function throw an exception, therefore, the code that adds people to the `personList.PersonCollection` in the *MainPage.xaml.cs* file needs to be wrapped in a try-catch block to handle the exception. Replace the code with the following:
@@ -480,7 +523,7 @@ Great job! You have successfully completed the demo on adding validation to bind
 
 ## Summary
 
-In this tutorial, we explored the AvnObservable library and used it to create an ObservableCollectionWithSelection, which enabled us to notify the binding system when a selected item in a collection changes.
+In this tutorial, we explored the AvnObservable library and used it to create an `ObservableCollectionWithSelection<T>`, which enabled us to notify the binding system when a selected item in the collection changes.
 
 We then added BindableProperty validation and error handling to our app, ensuring that our data is validated and displayed correctly for a more robust and user-friendly experience.
 

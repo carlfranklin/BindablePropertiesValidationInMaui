@@ -49,7 +49,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!--<PackageReference Include="AvnObservable" Version="1.0.1" />-->
+		<PackageReference Include="AvnObservable" Version="1.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
 	</ItemGroup>
 
