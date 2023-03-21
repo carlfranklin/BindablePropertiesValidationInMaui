@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 x:Class="BindablePropertiesInMaui.PersonListComponent">
+	<StackLayout Margin="20">
+		<Label FontSize="Medium"
+			   FontAttributes="Bold"
+			   Text="People" />
+		<Label x:Name="ValidationLabel"
+			   Text="{Binding ValidationErrorMessage}"
+			   TextColor="Red"
+			   Margin="0,24,0,0"
+			   VerticalOptions="Start"
+			   VerticalTextAlignment="Start" />
+		<ScrollView VerticalOptions="FillAndExpand">
+			<CollectionView x:Name="MyCollectionView"
+							SelectionMode="Single"
+							SelectedItem="{Binding PersonCollection.SelectedItem}"
+							ItemsSource="{Binding PersonCollection}">
+				<CollectionView.ItemTemplate>
+					<DataTemplate>
+						<Grid Padding="10">
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="Auto" />
+							</Grid.ColumnDefinitions>
+							<Label Grid.Column="0"
+								   Text="{Binding FirstName}" />
+							<Label Grid.Column="1"
+								   Text="{Binding LastName}"
+								   Margin="4,0,0,0"
+								   VerticalOptions="End" />
+						</Grid>
+					</DataTemplate>
+				</CollectionView.ItemTemplate>
+			</CollectionView>
+		</ScrollView>
+		
+		<StackLayout>
+			<Label Text="Person"
+				   FontSize="Medium"
+				   Margin="0,24,0,0" />
+			<Entry Text="{Binding PersonCollection.SelectedItem.FirstName}"
+				   TextChanged="PersonPropertyChanged"
+				   Placeholder="First Name"
+				   Margin="0,24,0,0" />
+			<Entry Text="{Binding PersonCollection.SelectedItem.LastName}"
+				   TextChanged="PersonPropertyChanged"
+				   Placeholder="Last Name"
+				   Margin="0,24,0,0" />
+			<DatePicker Date="{Binding PersonCollection.SelectedItem.DateOfBirth}"
+						Margin="0,24,0,0" />
+		</StackLayout>
+	</StackLayout>
+</ContentView>
