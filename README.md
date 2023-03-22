@@ -4,13 +4,15 @@ Bindable properties are an essential part of developing a robust user interface 
 
 ## Introduction
 
-In this tutorial, we'll build upon our previous demo and explore the AvnObservable library. Using AvnObservable, we can easily extend the functionality of `ObservableCollection` to create `ObservableCollectionWithSelection`, which enables us to notify the binding system when a selected item in a collection changes.
+In this tutorial, we'll build upon the demo from The .NET Show episode 39, and explore the AvnObservable library. Using AvnObservable, we can easily extend the functionality of `ObservableCollection` to create `ObservableCollectionWithSelection`, which enables us to notify the binding system when a selected item in a collection changes.
 
 Next, we'll delve into BindableProperty validation and error handling, which allow us to specify validation rules for a BindableProperty instance and handle any errors that may occur. By incorporating these features into our app, we can ensure that our data is validated and displayed correctly, providing a more robust and user-friendly experience.
 
+Finally, we'll add a `Refresh()` method to the component to force it to redraw itself after we've changed properties on the selected item.
+
 Here is a preview of what the final application will look like:
 
-![Bindable Properties Validation in MAUI](images/4a94a3b9cf6cf418a829c0524c102468542cc589b62d703edbf0bf1fed59fb5c.png)  
+![image-20230322012752736](images/image-20230322012752736.png)
 
 Let's dive in!
 
@@ -302,7 +304,7 @@ Replace the contents of *MainPage.xaml.cs* with the following:
 ```csharp
 namespace BindablePropertiesInMaui;
 
-public partial class MainPage : ContentPage
+public partial class MainPage : ContentPage, IDisposable
 {
     public MainPage()
     {

@@ -1,6 +1,6 @@
 ﻿namespace BindablePropertiesInMaui;
 
-public partial class MainPage : ContentPage
+public partial class MainPage : ContentPage, IDisposable
 {
     public MainPage()
     {
