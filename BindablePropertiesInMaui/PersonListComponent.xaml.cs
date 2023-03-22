@@ -9,6 +9,12 @@ public partial class PersonListComponent : ContentView
         InitializeComponent();
     }
 
+    public void Refresh()
+    {
+        PersonCollection.UpdateSelectedItemInCollection();
+        OnPropertyChanged("PersonCollection");
+    }
+
     private void PersonPropertyChanged(object sender, TextChangedEventArgs e)
     {
         // required for instant updates as you type

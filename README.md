@@ -521,11 +521,95 @@ The validation error message is being displayed when the collection is not initi
 
 Great job! You have successfully completed the demo on adding validation to bindable properties in a MAUI app and using the AvnObservable library to extend `ObservableCollection`.
 
+### Reflect Model Changes in UI
+
+So far we have done a good job of updating our Person model via the UI.
+
+What happens if our code changes properties of the Person object? Will the UI be able to reflect the changes?
+
+Let's experiment.
+
+Replace *MainPage.xaml* with the following:
+
+```xaml
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 x:Class="BindablePropertiesInMaui.MainPage"
+			 xmlns:local="clr-namespace:BindablePropertiesInMaui">
+    
+    <StackLayout>
+        <local:PersonListComponent x:Name="personList" />
+        <Button Clicked="Button_Clicked" Text="Click Me" />
+    </StackLayout>
+    
+</ContentPage>
+```
+
+We have added a button beneath the component. 
+
+Add the Button Clicked handler to *MainPage.xaml.cs*:
+
+```c#
+private void Button_Clicked(object sender, EventArgs e)
+{
+    // Update the Person object
+    personList.PersonCollection.SelectedItem.FirstName = "Joe";
+    personList.PersonCollection.SelectedItem.LastName = "Cool";
+}
+```
+
+When the button is clicked, we're updating our local model.
+
+Run the app and click the button. What happens?
+
+![image-20230322012019050](images/image-20230322012019050.png)
+
+Nothing happens.
+
+However, if you put a breakpoint in any property setter in *Person.cs*, you can confirm that the model is changing when you click the button:
+
+![image-20230322012120314](images/image-20230322012120314.png)
+
+We made a tradeoff by keeping our model pure. 
+
+The workaround I'm using is to implement a `Refresh()` method on the component, which will update the selected item in the collection and fire off a Property Changed notification for the Person property. This will cause the UI to update.
+
+Add this method to *PersonListComponent.xaml.cs*:
+
+```c#
+public void Refresh()
+{
+    PersonCollection.UpdateSelectedItemInCollection();
+    OnPropertyChanged("PersonCollection");
+}
+```
+
+Now, in the `Button_Clicked()` handler, after setting the properties on the model, call the `Refresh()` method:
+
+```c#
+private void Button_Clicked(object sender, EventArgs e)
+{
+    // Update the Person object
+    personList.PersonCollection.SelectedItem.FirstName = "Joe";
+    personList.PersonCollection.SelectedItem.LastName = "Cool";
+
+    // Tell the component to refresh
+    personList.Refresh();
+}
+```
+
+Run the app again, and notice the `PersonListComponent` does indeed reflect the changes when you click the button:
+
+![image-20230322012752736](images/image-20230322012752736.png)
+
 ## Summary
 
 In this tutorial, we explored the AvnObservable library and used it to create an `ObservableCollectionWithSelection<T>`, which enabled us to notify the binding system when a selected item in the collection changes.
 
 We then added BindableProperty validation and error handling to our app, ensuring that our data is validated and displayed correctly for a more robust and user-friendly experience.
+
+Finally, we added a `Refresh()` method to the component so the code can tell the UI to update after it changes properties on the model.
 
 ## Complete Code
 

@@ -43,4 +43,14 @@ public partial class MainPage : ContentPage
         personList.PersonCollection.SelectedItemChanging-= PersonCollection_SelectedItemChanging;
         personList.PersonCollection.SelectedItemChanged-= PersonCollection_SelectedItemChanged;
     }
+
+    private void Button_Clicked(object sender, EventArgs e)
+    {
+        // Update the Person object
+        personList.PersonCollection.SelectedItem.FirstName = "Joe";
+        personList.PersonCollection.SelectedItem.LastName = "Cool";
+
+        // Tell the component to refresh
+        personList.Refresh();
+    }
 }
